@@ -4,7 +4,7 @@ using TodoApi.Models;
 using System.Linq;
 
 namespace TodoApi.Controllers {
-    [Route ("api/[todo]")]
+    [Route ("api/todo")]
     public class TodoController : Controller {
         private readonly TodoContext _context;
 
@@ -30,6 +30,49 @@ namespace TodoApi.Controllers {
             }
             return new ObjectResult(item);
         }
+
+        [HttpPost]
+        public IActionResult Create([FromBody] TodoItem item) {
+            if (item == null) {
+                return BadRequest();
+            }
+
+            _context.TodoItems.Add(item);
+            _context.SaveChanges();
+
+            return CreatedAtRoute("GetTodo", new { id = item.Id }, item);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(long id, [FromBody] TodoItem item) {
+            if (item == null || item.Id != id) {
+                return BadRequest();
+            }
+
+            var todo = _context.TodoItems.FirstOrDefault(t => t.Id == id);
+            if (todo == null) {
+                return NotFound();
+            }
+
+            todo.IsComplete = item.IsComplete;
+            todo.Name = item.Name;
+
+            _context.TodoItems.Update(todo);
+            _context.SaveChanges();
+            return new NoContentResult();
+        }
+        
+        [HttpDelete("{id}")]
+        public IActionResult Delete(long id) {
+            var todo = _context.TodoItems.FirstOrDefault(t => t.Id == id);
+            if (todo == null) {
+                return NotFound();
+            }
+            _context.TodoItems.Remove(todo);
+            _context.SaveChanges();
+            return new NoContentResult();
+        }
+
     }
 
 }
